@@ -4,6 +4,10 @@
 
 ## General information
 
+> Known issue: As of 2025/01/23, due to ongoing migration from X.509 with VOMS
+> to tokens, some information in the Operations Portal is missing, and some
+> LSC files may be missing. Please report an issue or open a PR if needed.
+
 ### About VOMS and VOs
 
 This is an Ansible role which configures VOMS clients. VOMS is a web service for
@@ -62,7 +66,7 @@ chosen to be YAML so that we can add it to the repository and keep track of
 changes - this would be difficult with JSON, due to the lack of lines.
 
 We have opted for the latter (see
-[4215026e18c](https://github.com/EGI-Federation/ansible-role-VOMS-client/commit/52ac706fe059a336244bb2e4af0bdee2f37752a6))
+[4215026e18c](https://github.com/EGI-Federation/ansible-role-voms-client/commit/52ac706fe059a336244bb2e4af0bdee2f37752a6))
 for the following reasons:
 
 1. It is easier to _maintain_ a well-documented script than a complex json
@@ -72,7 +76,7 @@ for the following reasons:
    case, since the voms clients are used all over the place), the data needs to
    be present.
 
-There is however the drawback that the data in the repo can quickly become out
+There is however the drawback that the data in the repository can quickly become out
 of synch with the actual data on Lavoisier. This could happen either by
 individuals editing the cache by hand, or by the maintainer not running the
 script when necessary. The only way to overcome this is to maintain a strong
@@ -102,6 +106,10 @@ $ export OPS_PORTAL_API_TOKEN='...'
 $ curl -X GET "https://operations-portal.egi.eu/api/vo-voms/json" \
     -H "Accept: application/json" \
     -H "X-API-Key: $OPS_PORTAL_API_TOKEN"
+# Using JQ to filter a specific VO
+$ curl -X GET "https://operations-portal.egi.eu/api/vo-voms/json" \
+    H "Accept: application/json" \
+    H "X-API-Key: $OPS_PORTAL_API_TOKEN" | jq '.results[] | select(.name=="dteam")'
 ```
 
 Once the `curl` call is confirmed to work, it's possible to use the provided
@@ -116,7 +124,8 @@ $ ./files/create_clean_vo_data.py
 
 ## Testing
 
-The role is tested with [molecule](https://molecule.readthedocs.io/en/latest/)
+The role is tested with
+[molecule](https://ansible.readthedocs.io/projects/molecule/)
 for the following scenarios:
 
 - `default` (tested with
@@ -164,10 +173,27 @@ on the UMD role:
     - { role: EGI-Foundation.voms-client }
 ```
 
+### Supporting only a limited numbers of VO
+
+This can be achieved by setting the `supported_vos` variables, as an example,
+if one would like to include only support for biomed, dteam and ops:
+
+```yaml
+- hosts: servers
+  vars:
+    supported_vos:
+      - biomed
+      - dteam
+      - ops
+  roles:
+    - { role: EGI-Foundation.umd, release: 5 }
+    - { role: EGI-Foundation.voms-client }
+```
+
 ## License
 
 Apache-2.0
 
 ## Author Information
 
-See [AUTHORS.md](AUTHORS.md)
+See [AUTHORS](AUTHORS)
